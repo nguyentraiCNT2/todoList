@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord-like Interface</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* CSS cho header */
+        .sidebar {
+            background-color: #2f3136;
+            color: white;
+            height: 100vh;
+            position: fixed;
+            width: 80px;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+        }
+        .sidebar .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #72767d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        .sidebar .groups {
+            width: 100%;
+        }
+        .sidebar .group-item {
+            padding: 10px;
+            text-align: center;
+            color: #b9bbbe;
+            font-size: 20px;
+        }
+        .sidebar .group-item:hover {
+            background-color: #40444b;
+            cursor: pointer;
+        }
+        .main-content {
+            margin-left: 80px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="avatar">
+            <span>A</span>
+        </div>
+        <div class="groups" id="group-list">
+            <div class="group-item">
+                <i class="fas fa-plus"></i> Thêm Nhóm
+            </div>
+            <!-- Các nhóm sẽ được thêm vào đây -->
+        </div>
+    </div>
+    <div class="main-content">
+        <h1>Chào mừng đến với giao diện Discord!</h1>
+        <!-- Nội dung chính của trang ở đây -->
+        <div id="main-content-container"></div>
+    </div>
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script >
+          // Hàm để lấy token từ localStorage hoặc cookie
+          function getToken() {
+           console.log(document.cookie.getItem('token'));
+            return  document.cookie.getItem('token');
+        }
+
+        // Hàm để gọi API và cập nhật danh sách nhóm
+        async function fetchGroups() {
+            const token = getToken();
+            if (!token) {
+                console.error('Token not found');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8080/user/group/getbymember', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                updateGroupList(data);
+            } catch (error) {
+                console.error('Error fetching groups:', error);
+            }
+        }
+
+        // Hàm để cập nhật danh sách nhóm trên trang
+        function updateGroupList(groups) {
+            const groupListElement = document.getElementById('group-list');
+            groupListElement.innerHTML = ''; // Xóa nội dung hiện tại
+
+            groups.forEach(group => {
+                const groupItem = document.createElement('div');
+                groupItem.className = 'group-item';
+                groupItem.innerHTML = `<i class="fas fa-hashtag"></i> ${group.name}`;
+                groupListElement.appendChild(groupItem);
+            });
+        }
+
+        // Gọi hàm fetchGroups khi trang được tải
+        document.addEventListener('DOMContentLoaded', fetchGroups);
+    </script>
+</body>
+</html>

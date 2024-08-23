@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">To-Do List</h1>
+
+        <!-- Group Selection -->
+        <div class="form-group">
+            <label for="groupSelect">Chọn nhóm:</label>
+            <select id="groupSelect" class="form-control">
+                <option value="">Chọn nhóm</option>
+                <!-- Options sẽ được thêm qua JavaScript -->
+            </select>
+        </div>
+
+        <!-- Tasks Table -->
+        <div id="tasksContainer" class="mt-4">
+            <h2>Công việc của nhóm</h2>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên công việc</th>
+                        <th>Mô tả</th>
+                        <th>Ngày tạo</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="tasksTableBody">
+                    <!-- Rows sẽ được thêm qua JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Create Task Form -->
+        <div class="mt-5">
+            <h2>Tạo công việc mới</h2>
+            <form id="createTaskForm">
+                <div class="form-group">
+                    <label for="taskName">Tên công việc:</label>
+                    <input type="text" id="taskName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="taskDescription">Mô tả:</label>
+                    <textarea id="taskDescription" class="form-control" rows="3" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Tạo công việc</button>
+            </form>
+        </div>
+
+        <!-- Create Tag Form -->
+        <div class="mt-5">
+            <h2>Tạo thẻ mới</h2>
+            <form id="createTagForm">
+                <div class="form-group">
+                    <label for="tagName">Tên thẻ:</label>
+                    <input type="text" id="tagName" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Tạo thẻ</button>
+            </form>
+        </div>
+
+        <!-- Group Management -->
+        <div class="mt-5">
+            <h2>Quản lý nhóm</h2>
+            <form id="createGroupForm">
+                <div class="form-group">
+                    <label for="groupName">Tên nhóm:</label>
+                    <input type="text" id="groupName" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Tạo nhóm</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Hàm để lấy danh sách nhóm
+        async function loadGroups() {
+            try {
+                const response = await fetch('http://localhost:8080/user/group/getbymember', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + getToken() // Hàm để lấy token từ localStorage hoặc cookie
+                    },
+                    credentials: 'include'
+                });
+                const groups = await response.json();
+                const groupSelect = document.getElementById('groupSelect');
+                groups.forEach(group => {
+                    const option = document.createElement('option');
+                    option.value = group.id;
+                    option.textContent = group.name;
+                    groupSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Lỗi khi tải danh sách nhóm:', error);
+            }
+        }
+
+        // Hàm để tải công việc theo nhóm
+        async function loadTasksByGroup(groupId) {
+            try {
+                const response = await fetch(`http://localhost:8080/api/task/getbytag/${groupId}`);
+                const tasks = await response.json();
+                const tasksTableBody = document.getElementById('tasksTableBody');
+                tasksTableBody.innerHTML = ''; // Xóa các hàng hiện tại
+
+                tasks.forEach(task => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${task.id}</td>
+                        <td>${task.name}</td>
+                        <td>${task.description}</td>
+                        <td>${task.creationDate}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" onclick="editTask(${task.id})">Sửa</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">Xóa</button>
+                        </td>
+                    `;
+                    tasksTableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Lỗi khi tải công việc:', error);
+            }
+        }
+
+        // Hàm để tạo công việc mới
+        document.getElementById('createTaskForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const groupId = document.getElementById('groupSelect').value;
+            const taskName = document.getElementById('taskName').value;
+            const taskDescription = document.getElementById('taskDescription').value;
+
+            try {
+                await fetch(`http://localhost:8080/api/task/createtask/${groupId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: taskName, description: taskDescription })
+                });
+                loadTasksByGroup(groupId);
+                document.getElementById('createTaskForm').reset();
+            } catch (error) {
+                console.error('Lỗi khi tạo công việc:', error);
+            }
+        });
+
+        // Hàm để xóa công việc
+        async function deleteTask(taskId) {
+            const groupId = document.getElementById('groupSelect').value;
+            try {
+                await fetch(`http://localhost:8080/api/task/deletetask/${taskId}`, { method: 'DELETE' });
+                loadTasksByGroup(groupId);
+            } catch (error) {
+                console.error('Lỗi khi xóa công việc:', error);
+            }
+        }
+
+        // Hàm để tạo thẻ mới
+        document.getElementById('createTagForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const tagName = document.getElementById('tagName').value;
+
+            try {
+                await fetch('http://localhost:8080/user/tag/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: tagName })
+                });
+                document.getElementById('createTagForm').reset();
+                // Cập nhật danh sách thẻ nếu cần
+            } catch (error) {
+                console.error('Lỗi khi tạo thẻ:', error);
+            }
+        });
+
+        // Hàm để tạo nhóm mới
+        document.getElementById('createGroupForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const groupName = document.getElementById('groupName').value;
+
+            try {
+                await fetch('http://localhost:8080/user/group/creategroup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: groupName })
+                });
+                document.getElementById('createGroupForm').reset();
+                loadGroups(); // Cập nhật danh sách nhóm nếu cần
+            } catch (error) {
+                console.error('Lỗi khi tạo nhóm:', error);
+            }
+        });
+
+        // Xử lý sự kiện chọn nhóm
+        document.getElementById('groupSelect').addEventListener('change', (event) => {
+            const groupId = event.target.value;
+            if (groupId) {
+                loadTasksByGroup(groupId);
+            } else {
+                document.getElementById('tasksTableBody').innerHTML = '';
+            }
+        });
+
+        // Tải nhóm khi trang được tải
+        document.addEventListener('DOMContentLoaded', () => {
+            loadGroups();
+        });
+    </script>
+</body>
+</html>
