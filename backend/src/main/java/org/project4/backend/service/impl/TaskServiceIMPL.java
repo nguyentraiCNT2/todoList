@@ -35,33 +35,35 @@ public class TaskServiceIMPL implements TaskService {
     }
 
     @Override
-    public List<TaskDTO> getTaskBytag(Long tagid) {
+    public List<TaskDTO> getTaskBytag(Long tagid , Long groupid) {
         List<TaskDTO> resutf = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
-
         TagEntity tag = tagRepository.findById(tagid).orElseThrow(() -> new RuntimeException(" Không tìm thấy nhãn nào có id là: "+tagid));
         List<TaskTagEntity> taskTagEntities = taskTagRepository.findByTag(tag);
         for (TaskTagEntity item: taskTagEntities){
-            TaskDTO taskDTO = modelMapper.map(item.getTask(), TaskDTO.class);
-            resutf.add(taskDTO);
-            if (item.getTask().getDueDate().isAfter(now)){
-                NotificationEntity notificationEntity = new NotificationEntity();
-                notificationEntity.setNotified(false);
-                notificationEntity.setTask(item.getTask());
-                notificationEntity.setTaskId(item.getTask().getId());
-                notificationEntity.setNotifyAt(now);
-                notificationEntity.setContents("Công việc "+item.getTask().getTitle()+" Đã quá hạn");
-                notificationsRepository.save(notificationEntity);
+            if (item.getTask().getGroupId() == groupid){
+                TaskDTO taskDTO = modelMapper.map(item.getTask(), TaskDTO.class);
+                resutf.add(taskDTO);
+                if (item.getTask().getDueDate().isAfter(now)){
+                    NotificationEntity notificationEntity = new NotificationEntity();
+                    notificationEntity.setNotified(false);
+                    notificationEntity.setTask(item.getTask());
+                    notificationEntity.setTaskId(item.getTask().getId());
+                    notificationEntity.setNotifyAt(now);
+                    notificationEntity.setContents("Công việc "+item.getTask().getTitle()+" Đã quá hạn");
+                    notificationsRepository.save(notificationEntity);
+                }
+                if (item.getTask().getDueDate().isEqual(now)){
+                    NotificationEntity notificationEntity = new NotificationEntity();
+                    notificationEntity.setNotified(false);
+                    notificationEntity.setTask(item.getTask());
+                    notificationEntity.setTaskId(item.getTask().getId());
+                    notificationEntity.setNotifyAt(now);
+                    notificationEntity.setContents("Đã đến hạn");
+                    notificationsRepository.save(notificationEntity);
+                }
             }
-            if (item.getTask().getDueDate().isEqual(now)){
-                NotificationEntity notificationEntity = new NotificationEntity();
-                notificationEntity.setNotified(false);
-                notificationEntity.setTask(item.getTask());
-                notificationEntity.setTaskId(item.getTask().getId());
-                notificationEntity.setNotifyAt(now);
-                notificationEntity.setContents("Công việc "+item.getTask().getTitle()+" Đã đến hạn");
-                notificationsRepository.save(notificationEntity);
-            }
+
         }
         return resutf;
     }

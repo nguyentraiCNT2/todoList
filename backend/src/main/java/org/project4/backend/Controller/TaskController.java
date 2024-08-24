@@ -22,10 +22,10 @@ public class TaskController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/getbytag/{id}")
-    public ResponseEntity<?> getByTag(@PathVariable Long id){
+    @GetMapping("/getbytag")
+    public ResponseEntity<?> getByTag(@RequestParam Long tagid, @RequestParam Long groupid){
         try {
-            List<TaskDTO> taskDTOList = taskService.getTaskBytag(id);
+            List<TaskDTO> taskDTOList = taskService.getTaskBytag(tagid,groupid);
             return ResponseEntity.status(HttpStatus.OK)
                     .body(taskDTOList);
         }catch (Exception e){

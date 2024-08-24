@@ -5,7 +5,7 @@ import org.project4.backend.dto.TaskDTO;
 import java.util.List;
 
 public interface TaskService {
-       List<TaskDTO> getTaskBytag(Long tagid);
+       List<TaskDTO> getTaskBytag(Long tagid, Long groupid);
        List<TaskDTO> getByname(String name);
        TaskDTO getById(Long id);
        void createTask(TaskDTO taskDTO, Long tagid );
