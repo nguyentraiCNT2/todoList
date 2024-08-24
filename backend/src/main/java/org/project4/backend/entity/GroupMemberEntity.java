@@ -18,13 +18,9 @@ public class GroupMemberEntity {
     @JoinColumn(name = "user_id")
     private UserEntity user;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role = Role.MEMBER;
+    private String role;
 
-    public enum Role {
-        ADMIN, MEMBER
-    }
 
     public Long getId() {
         return id;
@@ -50,11 +46,11 @@ public class GroupMemberEntity {
         this.user = user;
     }
 
-    public Role getRole() {
+    public String getRole() {
         return role;
     }
 
-    public void setRole(Role role) {
+    public void setRole(String role) {
         this.role = role;
     }
 }

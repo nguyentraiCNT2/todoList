@@ -57,7 +57,7 @@ public class GroupServiceIMPL implements GroupService {
             GroupMemberEntity groupMemberEntity = new GroupMemberEntity();
             groupMemberEntity.setGroup(group_save);
             groupMemberEntity.setUser(user);
-            groupMemberEntity.setRole(GroupMemberEntity.Role.ADMIN);
+            groupMemberEntity.setRole("ADMIN");
             groupMemberRepository.save(groupMemberEntity);
         }catch (Exception e){
             throw new RuntimeException("Có lỗi sảy ra khi thêm mới: "+e.getMessage());
@@ -72,44 +72,43 @@ public class GroupServiceIMPL implements GroupService {
         GroupMemberEntity groupMemberEntity = new GroupMemberEntity();
         groupMemberEntity.setGroup(group);
         groupMemberEntity.setUser(user);
-        groupMemberEntity.setRole(GroupMemberEntity.Role.MEMBER);
+        groupMemberEntity.setRole("MEMBER");
+        groupMemberRepository.save(groupMemberEntity);
     }
 
     @Override
-    public void quitMember(Long groupid, Long userid, Long deleteUserid) {
-         GroupEntity group = groupRepository.findById(groupid).orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm nào có id là: "+ groupid));
-        List<GroupMemberEntity> groupMemberEntities= groupMemberRepository.findByGroup(group);
-        for ( GroupMemberEntity item: groupMemberEntities){
-            if (item.getUser().getId() != userid)
-                throw  new RuntimeException("Bạn không ở trong nhóm này ");
-            if (item.getRole() != GroupMemberEntity.Role.ADMIN)
-                throw  new RuntimeException("Chỉ có trưởng nhóm mới có thể xóa người dùng");
-            if (item.getUser().getId() ==  deleteUserid)
-                groupMemberRepository.delete(item);
-
+    public void quitMember(Long groupId, Long userId, Long deleteUserId) {
+        GroupEntity group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm nào có id là: " + groupId));
+        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("không tìm thấy người dùng nào có id là: "+userId));
+        GroupMemberEntity requestingMember = groupMemberRepository.findByGroupAndUser(group, user);
+        if (!requestingMember.getRole().equals("ADMIN")) {
+            throw new RuntimeException("Chỉ có trưởng nhóm mới có thể xóa người dùng");
         }
+        UserEntity deleteuser = userRepository.findById(deleteUserId).orElseThrow(() -> new RuntimeException("không tìm thấy người dùng nào có id là: "+deleteUserId));
+        GroupMemberEntity deleteUserMember = groupMemberRepository.findByGroupAndUser(group, deleteuser);
+        groupMemberRepository.delete(deleteUserMember);
     }
 
     @Override
     public void updateGroup(GroupDTO groupDTO , Long userid) {
         try {
-            LocalDateTime now = LocalDateTime.now();
             if (groupDTO.getName() == null || groupDTO.getName() == "")
                 throw new RuntimeException("Bạn chưa nhập tên của nhóm");
             if (groupDTO.getDescription() == null || groupDTO.getDescription() =="")
                 throw new RuntimeException("Bạn chưa nhập mô tải của nhóm");
-            GroupEntity entity = groupRepository.findById(groupDTO.getId()).orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm nào có id là: "+ groupDTO.getId()));
+            GroupEntity entity = groupRepository.findById(groupDTO.getId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm nào có id là: "+ groupDTO.getId()));
             List<GroupMemberEntity> groupMemberEntities= groupMemberRepository.findByGroup(entity);
             for ( GroupMemberEntity item: groupMemberEntities) {
                 if (item.getUser().getId() != userid)
                     throw new RuntimeException("Bạn không ở trong nhóm này ");
-                if (item.getRole() != GroupMemberEntity.Role.ADMIN)
+                if (!item.getRole().equals("ADMIN"))
                     throw  new RuntimeException("Chỉ có trưởng nhóm mới có thể chỉnh sửa nhóm");
             }
-            GroupEntity group = modelMapper.map(groupDTO, GroupEntity.class);
-            group.setCreatedByUser(entity.getCreatedByUser());
-            group.setCreatedAt(entity.getCreatedAt());
-          groupRepository.save(group);
+            entity.setName(groupDTO.getName());
+            entity.setDescription(groupDTO.getDescription());
+          groupRepository.save(entity);
         }catch (Exception e){
             throw new RuntimeException("Có lỗi sảy ra khi thêm mới: "+e.getMessage());
         }
@@ -122,7 +121,7 @@ public class GroupServiceIMPL implements GroupService {
         for ( GroupMemberEntity item: groupMemberEntities) {
             if (item.getUser().getId() != userid)
                 throw  new RuntimeException("Bạn không ở trong nhóm này ");
-            if (item.getRole() != GroupMemberEntity.Role.ADMIN)
+            if (!item.getRole().equals("ADMIN"))
                 throw  new RuntimeException("Chỉ có trưởng nhóm mới có thể xóa ");
             groupMemberRepository.delete(item);
         }
