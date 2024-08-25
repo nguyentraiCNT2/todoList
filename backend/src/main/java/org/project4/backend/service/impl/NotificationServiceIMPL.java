@@ -1,7 +1,15 @@
 package org.project4.backend.service.impl;
 
+import jakarta.annotation.PostConstruct;
+import org.dozer.DozerBeanMapper;
+import org.dozer.Mapper;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeMap;
+import org.project4.backend.config.MapperConfig;
+import org.project4.backend.dto.GroupDTO;
 import org.project4.backend.dto.NotificationDTO;
+import org.project4.backend.dto.TaskDTO;
+import org.project4.backend.dto.UserDTO;
 import org.project4.backend.entity.NotificationEntity;
 import org.project4.backend.entity.TaskEntity;
 import org.project4.backend.repository.NotificationsRepository;
@@ -12,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+
 @Service
 public class NotificationServiceIMPL implements NotificationService {
     @Autowired
@@ -20,15 +29,20 @@ public class NotificationServiceIMPL implements NotificationService {
     private TaskRepository taskRepository;
     @Autowired
     private ModelMapper modelMapper;
+    private final MapperConfig notificationMapper = MapperConfig.INSTANCE;
+
+
     @Override
     public List<NotificationDTO> getByTask(Long id) {
         List<NotificationDTO> list = new ArrayList<>();
-        TaskEntity task = taskRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy công việc nào có id là: "+id));
-        List<NotificationEntity> notificationEntities= notificationsRepository.findByTask(task);
-        for (NotificationEntity item: notificationEntities){
-            NotificationDTO dto = modelMapper.map(item, NotificationDTO.class);
-            list.add(dto);
+        TaskEntity task = taskRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy công việc nào có id là: " + id));
+        List<NotificationEntity> notifications = notificationsRepository.findByTask(task);
+
+        for (NotificationEntity notification : notifications) {
+            list.add(notificationMapper.toNotificationDTO(notification));
         }
-        return list ;
+
+        return list;
     }
 }

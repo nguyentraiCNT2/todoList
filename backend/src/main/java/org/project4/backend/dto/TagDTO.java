@@ -8,6 +8,8 @@ public class TagDTO {
 
     private String name;
 
+    private GroupDTO group;
+
     public Long getId() {
         return id;
     }
@@ -22,5 +24,13 @@ public class TagDTO {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public GroupDTO getGroup() {
+        return group;
+    }
+
+    public void setGroup(GroupDTO group) {
+        this.group = group;
     }
 }

@@ -2,7 +2,9 @@ package org.project4.backend.service.impl;
 
 import org.modelmapper.ModelMapper;
 import org.project4.backend.dto.TagDTO;
+import org.project4.backend.entity.GroupEntity;
 import org.project4.backend.entity.TagEntity;
+import org.project4.backend.repository.GroupRepository;
 import org.project4.backend.repository.TagRepository;
 import org.project4.backend.service.TagService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,11 +18,16 @@ public class TagServiceIMPL implements TagService {
     @Autowired
     private TagRepository tagRepository;
     @Autowired
+    private GroupRepository groupRepository;
+    @Autowired
     private ModelMapper modelMapper;
     @Override
-    public List<TagDTO> getAll() {
+    public List<TagDTO> getAll(Long groupid) {
         List<TagDTO> resutf = new ArrayList<>();
-        List<TagEntity> tagEntities = tagRepository.findAll();
+        GroupEntity group = groupRepository.findById(groupid).orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm có id: "+groupid+" này"));
+        List<TagEntity> tagEntities = tagRepository.findByGroup(group);
+        if (tagEntities.size() ==0)
+            throw new RuntimeException("Không có nhãn nào trong nhóm ");
         for (TagEntity item: tagEntities){
             TagDTO dto = modelMapper.map(item, TagDTO.class);
             resutf.add(dto);
@@ -34,7 +41,11 @@ public class TagServiceIMPL implements TagService {
         try {
                 if (tagDTO.getName() == null || tagDTO.getName() == "")
                     throw new RuntimeException("Bạn chưa nhập tên nhãn");
-                TagEntity tag = modelMapper.map(tagDTO, TagEntity.class);
+            GroupEntity group = groupRepository.findById(tagDTO.getGroup().getId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm có id: "+tagDTO.getGroup().getId()+" này"));
+
+            TagEntity tag = modelMapper.map(tagDTO, TagEntity.class);
+            tag.setGroup(group);
                 tagRepository.save(tag);
         }catch (Exception e){
             throw new RuntimeException("Có lỗi sảy ra khi thêm mới.");
@@ -50,7 +61,7 @@ public class TagServiceIMPL implements TagService {
                 throw new RuntimeException("Bạn không thể để trống tên nhãn");
             TagEntity tag = tagRepository.findById(tagDTO.getId())
                     .orElseThrow(() -> new RuntimeException("Không có nhãn nào có id là: "+tagDTO.getId()));
-            modelMapper.map(tagDTO, tag);
+            tag.setName(tagDTO.getName());
             tagRepository.save(tag);
         }catch (Exception e){
             throw new RuntimeException("Có lỗi không xác định khi sửa: "+e.getMessage());

@@ -12,6 +12,9 @@ public class TagEntity {
 
     @Column(unique = true, nullable = false, length = 50)
     private String name;
+    @ManyToOne
+    @JoinColumn(name = "group_id")
+    private GroupEntity group;
 
     public Long getId() {
         return id;
@@ -27,5 +30,13 @@ public class TagEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public GroupEntity getGroup() {
+        return group;
+    }
+
+    public void setGroup(GroupEntity group) {
+        this.group = group;
     }
 }

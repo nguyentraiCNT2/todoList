@@ -118,12 +118,16 @@ public class GroupServiceIMPL implements GroupService {
     public void delateGroup(Long id, Long userid) {
         GroupEntity group = groupRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm nào có id là: "+ id));
         List<GroupMemberEntity> groupMemberEntities= groupMemberRepository.findByGroup(group);
+        if (groupMemberEntities.size() ==0)
+            throw  new RuntimeException("Bạn không Bạn không có nhóm này ");
         for ( GroupMemberEntity item: groupMemberEntities) {
             if (item.getUser().getId() != userid)
                 throw  new RuntimeException("Bạn không ở trong nhóm này ");
             if (!item.getRole().equals("ADMIN"))
                 throw  new RuntimeException("Chỉ có trưởng nhóm mới có thể xóa ");
             groupMemberRepository.delete(item);
+
         }
+        groupRepository.delete(group);
     }
 }

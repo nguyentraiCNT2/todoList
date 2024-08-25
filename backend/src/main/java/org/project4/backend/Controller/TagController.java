@@ -14,10 +14,10 @@ import java.util.List;
 public class TagController {
     @Autowired
     private TagService tagService;
-    @GetMapping("/getall")
-    public ResponseEntity<?> getAll(){
+    @GetMapping("/getall/{id}")
+    public ResponseEntity<?> getAll(@PathVariable Long id){
         try {
-            List<TagDTO> tagDTOList = tagService.getAll();
+            List<TagDTO> tagDTOList = tagService.getAll(id);
             return ResponseEntity.status(HttpStatus.OK)
                     .body(tagDTOList);
         }catch (Exception e){

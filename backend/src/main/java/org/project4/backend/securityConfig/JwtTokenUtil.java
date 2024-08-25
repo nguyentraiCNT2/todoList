@@ -21,7 +21,7 @@ import java.util.function.Function;
 public class JwtTokenUtil implements Serializable {
 
     private static final long serialVersionUID = -2550185165626007488L;
-    private static final long JWT_TOKEN_VALIDITY = 5 * 60 * 60;
+    private static final long JWT_TOKEN_VALIDITY =  60 * 60;
     @Value("${jwt.key}")
     private String SECRET_KEY;
     private static final Set<String> blacklistedTokens = ConcurrentHashMap.newKeySet();

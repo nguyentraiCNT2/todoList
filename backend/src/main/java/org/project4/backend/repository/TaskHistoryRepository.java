@@ -10,6 +10,6 @@ import java.util.List;
 
 @Repository
 public interface TaskHistoryRepository extends JpaRepository<TaskHistoryEntity, Long> {
-    List<TaskHistoryEntity> findByTaskId(TaskEntity taskId);
-    List<TaskHistoryEntity> findByUserId(UserEntity userId);
+    List<TaskHistoryEntity> findByTask(TaskEntity taskId);
+    List<TaskHistoryEntity> findByUser(UserEntity userId);
 }

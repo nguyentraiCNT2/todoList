@@ -1,7 +1,9 @@
 package org.project4.backend.service.impl;
 
 import org.modelmapper.ModelMapper;
+import org.project4.backend.dto.GroupDTO;
 import org.project4.backend.dto.TaskDTO;
+import org.project4.backend.dto.UserDTO;
 import org.project4.backend.entity.*;
 import org.project4.backend.repository.*;
 import org.project4.backend.service.TaskService;
@@ -42,15 +44,37 @@ public class TaskServiceIMPL implements TaskService {
         List<TaskTagEntity> taskTagEntities = taskTagRepository.findByTag(tag);
         for (TaskTagEntity item: taskTagEntities){
             if (item.getTask().getGroupId() == groupid){
-                TaskDTO taskDTO = modelMapper.map(item.getTask(), TaskDTO.class);
+                TaskDTO taskDTO = new TaskDTO();
+                UserDTO userDTO  = modelMapper.map(item.getTask().getUser(), UserDTO.class);
+                GroupDTO groupDTO = modelMapper.map(item.getTask().getGroup(), GroupDTO.class);
+                taskDTO.setUser(userDTO);
+                taskDTO.setGroup(groupDTO);
+                taskDTO.setId(item.getTask().getId());
+                taskDTO.setDescription(item.getTask().getDescription());
+                taskDTO.setUserId(item.getTask().getUserId());
+                taskDTO.setCompleted(item.getTask().getCompleted());
+                taskDTO.setTitle(item.getTask().getTitle());
+                taskDTO.setPriority(item.getTask().getPriority());
+                taskDTO.setDueDate(item.getTask().getDueDate());
+                taskDTO.setCreatedAt(item.getTask().getCreatedAt());
+                taskDTO.setUpdatedAt(item.getTask().getUpdatedAt());
                 resutf.add(taskDTO);
-                if (item.getTask().getDueDate().isAfter(now)){
+                if (item.getTask().getDueDate().isBefore(now)){
                     NotificationEntity notificationEntity = new NotificationEntity();
                     notificationEntity.setNotified(false);
                     notificationEntity.setTask(item.getTask());
                     notificationEntity.setTaskId(item.getTask().getId());
                     notificationEntity.setNotifyAt(now);
                     notificationEntity.setContents("Công việc "+item.getTask().getTitle()+" Đã quá hạn");
+                    notificationsRepository.save(notificationEntity);
+                }
+                if (item.getTask().getDueDate().isAfter(now)){
+                    NotificationEntity notificationEntity = new NotificationEntity();
+                    notificationEntity.setNotified(false);
+                    notificationEntity.setTask(item.getTask());
+                    notificationEntity.setTaskId(item.getTask().getId());
+                    notificationEntity.setNotifyAt(now);
+                    notificationEntity.setContents("Công việc "+item.getTask().getTitle()+" có hạn là: "+item.getTask().getDueDate());
                     notificationsRepository.save(notificationEntity);
                 }
                 if (item.getTask().getDueDate().isEqual(now)){
@@ -142,19 +166,17 @@ public class TaskServiceIMPL implements TaskService {
                 throw new RuntimeException("Bạn chưa nhập chi tiết công việc.");
             if (taskDTO.getDueDate() == null )
                 throw new RuntimeException("Bạn chưa thời gian hết hạn của công việc.");
-            if (taskDTO.getDueDate().isAfter(now) )
+            if (taskDTO.getDueDate().isBefore(now) )
                 throw new RuntimeException("Thời gian không thể chọn thời gian nhỏ hơn này hiện tại.");
             TaskEntity taskEntity = taskRepository.findById(taskDTO.getId()).orElseThrow(() -> new RuntimeException("Không tìm thấy công việc nào có id là: "+taskDTO.getId()));
             TagEntity tag = tagRepository.findById(tagid).orElseThrow(() -> new RuntimeException("Không tìm thấy nhãn nào có id là: "+tagid));
-            UserEntity user = userRepository.findById(taskDTO.getUserId()).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng nào có id là:"+ taskDTO.getUserId()));
-            GroupEntity group = groupRepository.findById(taskDTO.getGroupId()).orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm nào có id là: "+ taskDTO.getGroupId()));
-            TaskEntity task = modelMapper.map(taskDTO, TaskEntity.class);
-            task.setCompleted(true);
-            task.setCreatedAt(taskEntity.getCreatedAt());
-            task.setUpdatedAt(now);
-            task.setUser(user);
-            task.setGroup(group);
-            TaskEntity task_save = taskRepository.save(task);
+            UserEntity user = userRepository.findById(taskEntity.getUserId()).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng nào có id là:"+ taskDTO.getUserId()));
+            taskEntity.setCompleted(true);
+            taskEntity.setUpdatedAt(now);
+            taskEntity.setTitle(taskDTO.getTitle());
+            taskEntity.setDescription(taskDTO.getDescription());
+            taskEntity.setDueDate(taskDTO.getDueDate() );
+            TaskEntity task_save = taskRepository.save(taskEntity);
             TaskTagEntity taskTag = new TaskTagEntity();
             taskTag.setTask(task_save);
             taskTag.setTag(tag);
@@ -180,7 +202,15 @@ public class TaskServiceIMPL implements TaskService {
             for (TaskTagEntity item: taskTagEntities){
                 taskTagRepository.delete(item);
             }
-            taskRepository.delete(taskEntity);
+            List<TaskHistoryEntity> taskHistoryEntities  = taskHistoryRepository.findByTask(taskEntity);
+            for (TaskHistoryEntity item: taskHistoryEntities){
+                taskHistoryRepository.deleteById(item.getId());
+            }
+            List<NotificationEntity> notificationEntities  = notificationsRepository.findByTask(taskEntity);
+            for (NotificationEntity item: notificationEntities){
+                notificationsRepository.deleteById(item.getId());
+            }
+            taskRepository.deleteById(id);
         }catch (Exception e){
             throw  new RuntimeException("Có lỗi khi xóa là: "+e.getMessage());
         }
