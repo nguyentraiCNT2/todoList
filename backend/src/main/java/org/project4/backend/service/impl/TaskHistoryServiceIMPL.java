@@ -1,7 +1,7 @@
 package org.project4.backend.service.impl;
 
 import org.modelmapper.ModelMapper;
-import org.project4.backend.config.MapperConfig;
+import org.project4.backend.config.ObjectMapper;
 import org.project4.backend.dto.TaskHistoryDTO;
 import org.project4.backend.entity.TaskHistoryEntity;
 import org.project4.backend.entity.UserEntity;
@@ -21,7 +21,7 @@ public class TaskHistoryServiceIMPL implements TaskHistoryService {
     private UserRepository userRepository;
     @Autowired
     private ModelMapper modelMapper;
-    private final MapperConfig notificationMapper = MapperConfig.INSTANCE;
+    private final ObjectMapper notificationMapper = ObjectMapper.INSTANCE;
     @Override
     public List<TaskHistoryDTO> getByUserid(Long userid) {
         List<TaskHistoryDTO> resuft = new ArrayList<>();

@@ -5,7 +5,7 @@ import org.dozer.DozerBeanMapper;
 import org.dozer.Mapper;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeMap;
-import org.project4.backend.config.MapperConfig;
+import org.project4.backend.config.ObjectMapper;
 import org.project4.backend.dto.GroupDTO;
 import org.project4.backend.dto.NotificationDTO;
 import org.project4.backend.dto.TaskDTO;
@@ -29,7 +29,7 @@ public class NotificationServiceIMPL implements NotificationService {
     private TaskRepository taskRepository;
     @Autowired
     private ModelMapper modelMapper;
-    private final MapperConfig notificationMapper = MapperConfig.INSTANCE;
+    private final ObjectMapper notificationMapper = ObjectMapper.INSTANCE;
 
 
     @Override
